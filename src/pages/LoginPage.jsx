@@ -2,6 +2,7 @@ import { Field, FieldLabel, FieldSet, FieldGroup, FieldDescription, FieldError }
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useNavigate} from "react-router-dom"
 
 export default function LoginPage() {
 
@@ -10,12 +11,38 @@ export default function LoginPage() {
     const [password, setPassword] = useState("")
     const [error, setError] = useState(false)
 
+    // for navigation between pages
+    const navigate = useNavigate()
+
     // async for fetching call with headers and error handling
-    async function OnLogin(e) {
-        //rest api
+    async function OnLogin() {
+        try {
+            const api_url = import.meta.env.VITE_API_URL
+            console.log(api_url)
+            const response = await fetch(api_url+"/psychiatrist_login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setError(data.message || "Login failed")
+            } else {
+                // redirect or save token
+                localStorage.setItem("token", data.token)
+                console.log("sucesss")
+                console.log(data.token)
+            }
+        } catch (err) {
+            setError("Something went wrong")
+        }
     }
     function OnSignup(e) {
-        //redirect
+        try {
+            navigate("/dashboard")
+        } catch (e) {
+            
+        }
     }
 
     const errors_list = []
@@ -41,7 +68,7 @@ export default function LoginPage() {
                         <Input
                             type="password"
                             placeholder="••••••••"
-                            value={email}
+                            value={password}
                             onChange={(e)=> setPassword(e.target.value)}
                         />
                         {error && <FieldError>Incorrect email or password</FieldError>}
