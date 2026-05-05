@@ -39,12 +39,13 @@ import {
     ChevronRight,
     FlaskConical,
     Pen,
+    Trash2,
+    Trash2Icon,
 } from "lucide-react";
 import AppSideBar from "./AppSideBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = `Bearer ${"9999999999999999999555"}`;
 
 
 function getInitials(first = "", last = "") {
@@ -110,13 +111,28 @@ function useFetch(url, reload) {
         setLoading(true);
         setData(null);
         setError(null);
-        fetch(url, { headers: { Authorization: AUTH } })
+        fetch(url, { headers: { authorization: sessionStorage.getItem("token") } })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => { setData(d); setLoading(false); })
             .catch(e => { setError(e.message); setLoading(false); });
     }, [url, reload]);
 
     return { data, loading, error };
+}
+
+async function delete_thread(thread_id) {
+        try {
+        const response = await fetch(API_URL+"/thread", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                authorization: sessionStorage.getItem("token")
+             },
+            body: JSON.stringify({ thread_id: thread_id})
+        })
+    } catch (err) {
+        setError("Something went wrong")
+    }
 }
 
 
@@ -379,7 +395,7 @@ export default function PatientPage() {
                                                 )}
                                             </div>
                                             <Button className="relative"
-                                                onClick={() => alert()}
+                                                onClick={() => navigate('/session/${patient_id}')}
                                             >
                                                 Create Session
                                             </Button>
@@ -447,6 +463,12 @@ export default function PatientPage() {
                                                                     No diagnosis
                                                                 </span>
                                                             )}
+                                                            <Button onClick={() => {
+                                                                delete_thread(thread.thread_id);
+                                                                setReload(!reload);
+                                                            }}>
+                                                                <Trash2Icon/>
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                 ))

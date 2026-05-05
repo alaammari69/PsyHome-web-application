@@ -25,7 +25,7 @@ import {
 import { UserPen, UserPlus, Save, Loader2 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = `Bearer ${"9999999999999999999555"}`; // TODO: replace with real auth token
+const AUTH = sessionStorage.getItem("token");
 
 
 export default function PatientFormModal({ open, onClose, onSaved, isEditMode = false, patient = null }) {

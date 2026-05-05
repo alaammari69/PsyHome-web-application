@@ -110,7 +110,10 @@ async function delete_patient(patient_id) {
     try {
         const response = await fetch(API_URL+"/patient", {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                authorization: sessionStorage.getItem("token")
+             },
             body: JSON.stringify({ patient_id: patient_id})
         })
     } catch (err) {
@@ -138,7 +141,7 @@ export default function AllPatientsPage() {
     // get all patients using REST api
     useEffect(() => {
         fetch(`${API_URL}/patient/all`, {
-            headers: { Authorization: `Bearer ${"9999999999999999999555"}` },
+            headers: { authorization: sessionStorage.getItem("token") },
         },reload)
             .then((res) => { //check if no errors occured
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -163,6 +166,7 @@ export default function AllPatientsPage() {
 
 
     return (
+        
         <SidebarProvider>
             <AppSideBar />
             {/*TooltipProvider must wrap any <Tooltip> usage in shadcn*/}

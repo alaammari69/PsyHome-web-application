@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = `Bearer ${"9999999999999999999555"}`; // TODO: replace with real auth token from context/store
+const AUTH = sessionStorage.getItem("token")
 
 /* Formats a date string into a readable date + time (e.g. "3 Jan 2024, 14:30") */
 function formatDateTime(dateStr) {
@@ -52,7 +52,7 @@ function useFetch(url) {
         setLoading(true);
         setData(null);
         setError(null);
-        fetch(url, { headers: { Authorization: AUTH } })
+        fetch(url, { headers: { authorization: AUTH } })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => { setData(d); setLoading(false); })
             .catch(e => { setError(e.message); setLoading(false); });
