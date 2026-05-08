@@ -25,7 +25,6 @@ import {
 import { UserPen, UserPlus, Save, Loader2 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = sessionStorage.getItem("token");
 
 
 export default function PatientFormModal({ open, onClose, onSaved, isEditMode = false, patient = null }) {
@@ -70,42 +69,69 @@ export default function PatientFormModal({ open, onClose, onSaved, isEditMode = 
         setSaving(true);
 
         try {
-            if (!firstName || !lastName || !cin || !dateOfBirth || !gender || !username || !password) { // check for no empty feilds
-                    setError("All fields are required when creating a new patient.");
-                    setSaving(false);
-                    return;
+            // check for empty fields
+            if (!firstName || !lastName || !cin || !dateOfBirth || !gender || !username || !password) {
+                setError("All fields are required.");
+                setSaving(false);
+                return;
             }
+
+            // gender must be male or female
+            if (!["male", "female"].includes(gender.toLowerCase())) {
+                setError("Gender must be either 'Male' or 'Female'.");
+                setSaving(false);
+                return;
+            }
+
+            // cin must be exactly 8 digits
+            if (!/^\d{8}$/.test(cin)) {
+                setError("CIN must be exactly 8 digits.");
+                setSaving(false);
+                return;
+            }
+
+            // password complexity: 8+ chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(password)) {
+                setError("Password must contain at least 8 characters, 1 uppercase letter, 1 number, and 1 special character.");
+                setSaving(false);
+                return;
+            }
+
             const body = {
-                        first_name: firstName,
-                        last_name: lastName,
-                        cin,
-                        date_of_birth: dateOfBirth,
-                        gender,
-                        username,
-                        password,
-                    }
+                first_name: firstName,
+                last_name: lastName,
+                cin,
+                date_of_birth: dateOfBirth,
+                gender,
+                username,
+                password,
+            };
+
             if (isEditMode) {
-                // add the patient id
                 body.patient_id = patient.patient_id;
-                
+
                 const res = await fetch(`${API_URL}/patient`, {
                     method: "PATCH",
-                    headers: { "Content-Type": "application/json", Authorization: AUTH },
+                    headers: { "Content-Type": "application/json", authorization: sessionStorage.getItem("token") },
                     body: JSON.stringify(body),
                 });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.detail || `HTTP ${res.status}`);
+                }
             } else {
-                
                 const res = await fetch(`${API_URL}/patient`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: AUTH },
+                    headers: { "Content-Type": "application/json", authorization: sessionStorage.getItem("token") },
                     body: JSON.stringify(body),
                 });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.detail || `HTTP ${res.status}`);
+                }
             }
 
-            onSaved?.();   // to tell the parent page to reload
+            onSaved?.();
             onClose(false);
         } catch (e) {
             setError(e.message);

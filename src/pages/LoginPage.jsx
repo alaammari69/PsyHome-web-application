@@ -27,10 +27,14 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Incorrect email or password.");
+        setError(data.detail || "Incorrect email or password.");
       } else {
         sessionStorage.setItem("token", data.token);
-        navigate("/patients");
+        if (data.type === "PSY") {
+          navigate("/patients")
+        } else if (data.type === "ADMIN") {
+          navigate("/admin")
+        }
       }
     } catch {
       setError("Could not reach the server. Please try again.");

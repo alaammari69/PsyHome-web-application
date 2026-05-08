@@ -47,7 +47,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = () => sessionStorage.getItem("token");
 
 
 function cn(...classes) {
@@ -77,7 +76,7 @@ export default function CreateSessionPage() {
 
     // fetch catalog
     useEffect(() => {
-        fetch(`${API_URL}/disorders`, { headers: { authorization: AUTH() } })
+        fetch(`${API_URL}/disorders`, { headers: { authorization: sessionStorage.getItem("token") } })
             .then(r => r.json())
             .then(data => {
                 setCatalog(Array.isArray(data) ? data : []);
@@ -154,21 +153,23 @@ export default function CreateSessionPage() {
         setError(null);
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/patient/${patient_id}/threads`, {
+            const res = await fetch(`${API_URL}/session`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    authorization: AUTH(),
+                    authorization: sessionStorage.getItem("token"),
                 },
                 body: JSON.stringify({
-                    description: description.trim() || null,
-                    symptom_ids: selectedSymptoms.map(s => s.symptom_id),
-                    disorder_ids: selectedDisorders.map(d => d.disorder_id),
+                    patient_id: Number(patient_id),
+                    additional_info: description.trim() || "",
+                    symptoms: selectedSymptoms.map(s => s.symptom_id),
+                    disorders: selectedDisorders.map(d => d.disorder_id),
                 }),
             });
             const data = await res.json();
             if (!res.ok) {
                 setError(data.message || "Failed to create session.");
+                console.log(data.detail);
             } else {
                 navigate(-1);
             }

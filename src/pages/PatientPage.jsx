@@ -121,14 +121,14 @@ function useFetch(url, reload) {
 }
 
 async function delete_thread(thread_id) {
-        try {
-        const response = await fetch(API_URL+"/thread", {
+    try {
+        const response = await fetch(API_URL + "/thread", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
                 authorization: sessionStorage.getItem("token")
-             },
-            body: JSON.stringify({ thread_id: thread_id})
+            },
+            body: JSON.stringify({ thread_id: thread_id })
         })
     } catch (err) {
         setError("Something went wrong")
@@ -144,10 +144,10 @@ export default function PatientPage() {
     // for reloading page
     const [reload, setReload] = useState(false);
 
-    const { data: patient, loading: lPatient } = useFetch(`${API_URL}/patient/${patient_id}`,reload);
-    const { data: threads, loading: lThreads } = useFetch(`${API_URL}/patient/${patient_id}/threads`,reload);
-    const { data: symptoms, loading: lSymptoms } = useFetch(`${API_URL}/patient/${patient_id}/symptoms`,reload);
-    const { data: disorders, loading: lDisorders } = useFetch(`${API_URL}/patient/${patient_id}/disorders`,reload);
+    const { data: patient, loading: lPatient } = useFetch(`${API_URL}/patient/${patient_id}`, reload);
+    const { data: threads, loading: lThreads } = useFetch(`${API_URL}/patient/${patient_id}/threads`, reload);
+    const { data: symptoms, loading: lSymptoms } = useFetch(`${API_URL}/patient/${patient_id}/symptoms`, reload);
+    const { data: disorders, loading: lDisorders } = useFetch(`${API_URL}/patient/${patient_id}/disorders`, reload);
 
     // the diagnosis_id to load in the modal
     const [selectedDiagnosisId, setSelectedDiagnosisId] = useState(null);
@@ -158,7 +158,7 @@ export default function PatientPage() {
     const [editMode, setEditMode] = useState(false);
     const [selectedPatient, setSelectedPatient] = useState(null);
 
-    
+
 
     function openDiagnosis(diagnosisId) {
         setSelectedDiagnosisId(diagnosisId);
@@ -260,12 +260,13 @@ export default function PatientPage() {
                                                     <Calendar className="h-3.5 w-3.5" />
                                                     DOB: {formatDate(patient.date_of_birth)}
                                                 </span>
-                                                {patient.cin && (
-                                                    <span className="flex items-center gap-1.5">
-                                                        <FlaskConical className="h-3.5 w-3.5" />
-                                                        CIN: {patient.cin}
-                                                    </span>
-                                                )}
+                                                <span className="flex items-center gap-1.5">
+                                                    <FlaskConical className="h-3.5 w-3.5" />
+                                                    CIN: {patient.cin}
+                                                </span>
+                                                <span className="flex items-center gap-1.5">
+                                                    Username: {patient.username}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -395,7 +396,7 @@ export default function PatientPage() {
                                                 )}
                                             </div>
                                             <Button className="relative"
-                                                onClick={() => navigate('/session/${patient_id}')}
+                                                onClick={() => navigate(`/session/${patient_id}`)}
                                             >
                                                 Create Session
                                             </Button>
@@ -441,10 +442,10 @@ export default function PatientPage() {
                                                         {/* status badge and diagnosis button */}
                                                         <div className="flex items-center gap-2">
                                                             <Badge
-                                                                variant={thread.status ? "default" : "secondary"}
+                                                                variant={thread.status ? "secondary" : "default"}
                                                                 className="text-xs"
                                                             >
-                                                                {thread.status ? "Completed" : "In progress"}
+                                                                {thread.status ? "In progress" : "Completed"}
                                                             </Badge>
 
                                                             {thread.diagnosis_id ? (
@@ -467,7 +468,7 @@ export default function PatientPage() {
                                                                 delete_thread(thread.thread_id);
                                                                 setReload(!reload);
                                                             }}>
-                                                                <Trash2Icon/>
+                                                                <Trash2Icon />
                                                             </Button>
                                                         </div>
                                                     </div>

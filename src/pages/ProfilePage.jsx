@@ -39,7 +39,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "./AppSideBar";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = sessionStorage.getItem("token");
 
 
 function getInitials(first = "", last = "") {
@@ -108,8 +107,8 @@ function ChangePasswordModal({ open, onClose }) {
         if (!oldPassword || !newPassword || !confirmPass) {
             setError("All fields are required."); return;
         }
-        if (newPassword.length < 8) {
-            setError("New password must be at least 8 characters."); return;
+        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(newPassword)) {
+            setError("Password must contain at least 8 characters, 1 uppercase letter, 1 number, and 1 special character."); return;
         }
         if (newPassword !== confirmPass) {
             setError("New passwords do not match."); return;
@@ -121,7 +120,7 @@ function ChangePasswordModal({ open, onClose }) {
         setLoading(true);
         fetch(`${API_URL}/profile/pwd`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json", authorization: AUTH },
+            headers: { "Content-Type": "application/json", authorization: sessionStorage.getItem("token") },
             body: JSON.stringify({ new_password: newPassword, old_password: oldPassword }),
         })
             .then(r => { if (!r.ok) throw new Error("Incorrect current password."); setSuccess(true); })
@@ -152,20 +151,20 @@ function ChangePasswordModal({ open, onClose }) {
                     </div>
                 ) : (
                     <div className="space-y-4 pt-1">
-                            <PasswordField
-                                handleChange={handleChange}
+                        <PasswordField
+                            handleChange={handleChange}
                             label="Current password"
                             value={oldPassword} setter={setOldPassword}
                             show={showOld} onToggle={() => setShowOld(v => !v)}
                         />
-                            <PasswordField
-                                handleChange={handleChange}
+                        <PasswordField
+                            handleChange={handleChange}
                             label="New password"
                             value={newPassword} setter={setNewPassword}
                             show={showNew} onToggle={() => setShowNew(v => !v)}
                         />
-                            <PasswordField
-                                handleChange={handleChange}
+                        <PasswordField
+                            handleChange={handleChange}
                             label="Confirm new password"
                             value={confirmPass} setter={setConfirmPass}
                             show={showConfirm} onToggle={() => setShowConfirm(v => !v)}
@@ -190,7 +189,7 @@ function ChangePasswordModal({ open, onClose }) {
 }
 
 // reusable password field with toggle
-function PasswordField({ label, value, setter, show, onToggle, onKeyDown , handleChange}) {
+function PasswordField({ label, value, setter, show, onToggle, onKeyDown, handleChange }) {
     return (
         <div className="space-y-1.5">
             <label className="text-sm font-medium">{label}</label>
@@ -224,7 +223,7 @@ export default function ProfilePage() {
     const [modal, setModal] = useState(false);
 
     useEffect(() => {
-        fetch(`${API_URL}/profile`, { headers: { authorization: AUTH } })
+        fetch(`${API_URL}/profile`, { headers: { authorization: sessionStorage.getItem("token") } })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => { setPsy(d); setLoading(false); })
             .catch(e => { setError(e.message); setLoading(false); });

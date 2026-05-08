@@ -24,7 +24,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "./AppSideBar";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = sessionStorage.getItem("token");
 
 // so diffrent categories of disorders has diffrent color
 const CATEGORY_COLORS = [
@@ -163,7 +162,7 @@ export default function ReferencePage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch(`${API_URL}/disorders`, { headers: { Authorization: AUTH } })
+    fetch(`${API_URL}/disorders`, { headers: { authorization: sessionStorage.getItem("token") } })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { setDisorders(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });

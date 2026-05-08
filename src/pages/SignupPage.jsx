@@ -122,10 +122,11 @@ export default function SignupPage() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Invalid email";
     if (!form.password) newErrors.password = "Required";
-    else if (form.password.length < 8)
-      newErrors.password = "At least 8 characters";
+    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(form.password))
+      newErrors.password = "Password must contain at least 8 characters, 1 uppercase letter, 1 number, and 1 special character.";
     if (!form.date_of_birth) newErrors.date_of_birth = "Required";
     if (!form.phone.trim()) newErrors.phone = "Required";
+    else if (!/^[0-9]{8}$/.test(form.phone)) newErrors = "Invalid number"
     if (!form.address.trim()) newErrors.address = "Required";
     if (!form.specialization.trim()) newErrors.specialization = "Required";
     return newErrors;
@@ -141,7 +142,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/psychiatrist_register`,
+        `${import.meta.env.VITE_API_URL}/psychiatrist_signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -167,7 +168,7 @@ export default function SignupPage() {
     setGlobalError(null);
   }
 
-  // Pair half-width fields
+  // half width fields in pairs
   const rows = [];
   let i = 0;
   while (i < FIELD_CONFIG.length) {

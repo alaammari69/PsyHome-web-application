@@ -13,7 +13,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "./AppSideBar";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH = sessionStorage.getItem("token");
 
 
 function formatDateTime(dateStr) {
@@ -32,7 +31,7 @@ function useFetch(url) {
     useEffect(() => {
         if (!url) return;
         setLoading(true);
-        fetch(url, { headers: { authorization: AUTH } })
+        fetch(url, { headers: { authorization: sessionStorage.getItem("token") } })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => { setData(d); setLoading(false); })
             .catch(e => { setError(e.message); setLoading(false); });
@@ -181,8 +180,8 @@ export default function SessionPage() {
                                     </span>
 
                                     {/* status */}
-                                    <Badge variant={thread.status ? "default" : "secondary"}>
-                                        {thread.status ? "Completed" : "In progress"}
+                                    <Badge variant={thread.status ? "secondary" : "default"}>
+                                        {thread.status ? "In progress" : "Completed"}
                                     </Badge>
 
                                     {/* diagnosis */}
@@ -212,6 +211,23 @@ export default function SessionPage() {
                             )}
                         </CardContent>
                     </Card>
+                    <Card className="border-muted">
+                        <CardContent className="pt-6">
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">Additional Instructions</p>
+
+                                {thread?.additional_info ? (
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {thread.additional_info}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm italic text-muted-foreground">
+                                        No additional instructions were provided.
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* for showin the conversation */}
                     <Card>
@@ -233,8 +249,8 @@ export default function SessionPage() {
                                         ) : (
                                             <HumanBubble key={i} content={msg.content} />
                                         )
-                                            )}
-                                            
+                                    )}
+
                                     {/*auto scrol refrence */}
                                     <div ref={bottomRef} />
                                 </div>

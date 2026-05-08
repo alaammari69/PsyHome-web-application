@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { Plus, Search, Eye, RefreshCw, Users, Delete, DeleteIcon, Trash } from "lucide-react";
+import { Plus, Search, Users, Trash } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "./AppSideBar";
 import { useNavigate } from "react-router-dom";
 
 import PatientFormModal from "./PatientFormModal";
+import { AlertDialog ,AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -42,7 +43,7 @@ function formatDate(dateStr) {
     });
 }
 
-// returns a class value that changes the Avatar feild backgroud according to the gender and gives the text a tint color 
+// returns a class value that changes the avatar feild backgroud according to the gender and gives the text a tint color 
 function genderAvatarClass(gender) {
     switch (gender) {
         case "male": return "bg-blue-100 text-blue-700";
@@ -75,7 +76,7 @@ function SkeletonRows() {
             </TableCell>
 
 
-            {/* Remaining columns */}
+            {/* remaining columns */}
             <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-3 w-8" /></TableCell>
             <TableCell><Skeleton className="h-3 w-12" /></TableCell>
@@ -108,18 +109,18 @@ function StatCard({ label, value, loading }) {
 
 async function delete_patient(patient_id) {
     try {
-        const response = await fetch(API_URL+"/patient", {
+        const response = await fetch(API_URL + "/patient", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
                 authorization: sessionStorage.getItem("token")
-             },
-            body: JSON.stringify({ patient_id: patient_id})
+            },
+            body: JSON.stringify({ patient_id: patient_id })
         })
     } catch (err) {
         setError("Something went wrong")
     }
-    
+
 }
 
 export default function AllPatientsPage() {
@@ -142,7 +143,7 @@ export default function AllPatientsPage() {
     useEffect(() => {
         fetch(`${API_URL}/patient/all`, {
             headers: { authorization: sessionStorage.getItem("token") },
-        },reload)
+        }, reload)
             .then((res) => { //check if no errors occured
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
@@ -166,15 +167,15 @@ export default function AllPatientsPage() {
 
 
     return (
-        
+
         <SidebarProvider>
             <AppSideBar />
-            {/*TooltipProvider must wrap any <Tooltip> usage in shadcn*/}
+
             <SidebarInset className="flex-1 min-w-0">
                 <TooltipProvider>
                     <div className="p-6 space-y-6">
 
-                        {/* ── Header ── */}
+                        {/* header */}
                         <div className="flex items-start justify-between">
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight">Patients</h1>
@@ -183,7 +184,7 @@ export default function AllPatientsPage() {
                                 </p>
                             </div>
 
-                            {/* button variant=default -> filled primary colour. */}
+                            {/* button variant=default for filled primary colour*/}
                             <Button variant="default" onClick={() => {
                                 setEditMode(false);
                                 setSelectedPatient(null);
@@ -279,6 +280,7 @@ export default function AllPatientsPage() {
                                             {/* data rows */}
                                             {!loading && filtered.map((p) => (
                                                 <TableRow key={p.patient_id} >
+
                                                     {/* patients: Avatar + name + ID*/}
                                                     <TableCell onClick={() => navigate(`/patient/id/${p.patient_id}`)}>
                                                         <div className="flex items-center gap-3">
@@ -309,7 +311,7 @@ export default function AllPatientsPage() {
                                                         </Badge>
                                                     </TableCell>
 
-                                                    {/* Age */}
+                                                    {/* age */}
                                                     <TableCell className="tabular-nums" onClick={() => navigate(`/patient/id/${p.patient_id}`)}>
                                                         {p.age ?? "—"}
                                                     </TableCell>
@@ -336,25 +338,39 @@ export default function AllPatientsPage() {
                                                         )}
                                                     </TableCell>
 
-                                                    {/*row buttons */}
+                                                    {/* row buttons */}
                                                     <TableCell>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8"
-                                                                    onClick={() => {
-                                                                        delete_patient(p.patient_id);
-                                                                        setReload(!reload);
-                                                                    }}
-                                                                >
-                                                                    <Trash className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Delete Patient</TooltipContent>
-                                                        </Tooltip>
+                                                        <AlertDialog>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                            <Trash className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Delete Patient</TooltipContent>
+                                                            </Tooltip>
 
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete patient account?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        This will permanently delete {p.first_name} {p.last_name}'s account.
+                                                                        This cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => {
+                                                                        delete_patient(p.patient_id)
+                                                                        setReload(!reload)
+                                                                    }}>
+                                                                        Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -368,7 +384,7 @@ export default function AllPatientsPage() {
                 <PatientFormModal
                     open={openModal}
                     onClose={setOpenModal}
-                    onSaved={()=>{setReload(!reload)}}
+                    onSaved={() => { setReload(!reload) }}
                     isEditMode={editMode}
                     patient={selectedPatient}
                 />
