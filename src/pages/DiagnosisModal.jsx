@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 import {
     Card,
@@ -27,6 +30,7 @@ import {
     CheckCircle2,
     XCircle,
     ClipboardList,
+    Download,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -62,19 +66,70 @@ function useFetch(url) {
 
 // opens a dialog to show the generated diagnosis
 export default function DiagnosisModal({ diagnosisId, open, onClose }) {
+    const contentRef = useRef(null);
+    const [exporting, setExporting] = useState(false);
+
     // get the diagnosis data
     const { data, loading, error } = useFetch(
         diagnosisId ? `${API_URL}/diagnosis/${diagnosisId}` : null
     );
 
+const handleExportPDF = async () => {
+    if (!contentRef.current) return;
+    setExporting(true);
+    try {
+        const imgData = await toPng(contentRef.current, {
+            scale: 2,
+            backgroundColor: "#ffffff",
+        });
+
+        const img = new Image();
+        img.src = imgData;
+        await new Promise(res => { img.onload = res; });
+
+        const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (img.height * pageWidth) / img.width;
+
+        let y = 0;
+        while (y < imgHeight) {
+            if (y > 0) pdf.addPage();
+            pdf.addImage(imgData, "PNG", 0, -y, imgWidth, imgHeight);
+            y += pageHeight;
+        }
+
+        pdf.save(`diagnosis-${diagnosisId}.pdf`);
+    } finally {
+        setExporting(false);
+    }
+};
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent style={{ width: "75vw", maxWidth: "75vw" }} className="max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Brain className="h-5 w-5 text-violet-600" />
-                        Diagnosis Report
-                    </DialogTitle>
+                    <div className="flex items-center justify-between">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Brain className="h-5 w-5 text-violet-600" />
+                            Diagnosis Report
+                        </DialogTitle>
+                        {/* Export button — only shown when data is ready */}
+                        {data && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleExportPDF}
+                                disabled={exporting}
+                                className="flex items-center gap-1.5"
+                            >
+                                <Download className="h-4 w-4" />
+                                {exporting ? "Exporting…" : "Export PDF"}
+                            </Button>
+                        )}
+                    </div>
                     {/* generation timestamp */}
                     {data && (
                         <DialogDescription>
@@ -83,7 +138,7 @@ export default function DiagnosisModal({ diagnosisId, open, onClose }) {
                     )}
                 </DialogHeader>
 
-                {/*skeleton */}
+                {/* skeleton */}
                 {loading && (
                     <div className="space-y-4 mt-2">
                         <Skeleton className="h-4 w-1/3" />
@@ -100,128 +155,128 @@ export default function DiagnosisModal({ diagnosisId, open, onClose }) {
                     </p>
                 )}
 
+                {/* printable content */}
+                <div ref={contentRef}>
+                    {data && (
+                        <div className="space-y-5 mt-2">
 
-                {data && (
-                    <div className="space-y-5 mt-2">
-
-                        {/* confidence progress bar */}
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground font-medium">Overall confidence</span>
-                                <span className="font-bold">{data.overall_confidence}%</span>
+                            {/* confidence progress bar */}
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground font-medium">Overall confidence</span>
+                                    <span className="font-bold">{data.overall_confidence}%</span>
+                                </div>
+                                <Progress value={data.overall_confidence} className="h-2" />
                             </div>
-                            <Progress value={data.overall_confidence} className="h-2" />
-                        </div>
 
-                        <Separator />
+                            <Separator />
 
-                        {data.clinical_summary && (
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold flex items-center gap-1.5">
-                                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                                    Clinical summary
-                                </p>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {data.clinical_summary}
-                                </p>
-                            </div>
-                        )}
+                            {data.clinical_summary && (
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-1.5">
+                                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                                        Clinical summary
+                                    </p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {data.clinical_summary}
+                                    </p>
+                                </div>
+                            )}
 
+                            {data.recommended_followup && (
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-1.5">
+                                        <Activity className="h-4 w-4 text-muted-foreground" />
+                                        Recommended follow-up
+                                    </p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {data.recommended_followup}
+                                    </p>
+                                </div>
+                            )}
 
-                        {data.recommended_followup && (
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold flex items-center gap-1.5">
-                                    <Activity className="h-4 w-4 text-muted-foreground" />
-                                    Recommended follow-up
-                                </p>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {data.recommended_followup}
-                                </p>
-                            </div>
-                        )}
+                            <Separator />
 
-                        <Separator />
+                            <div className="space-y-3">
+                                <p className="text-sm font-semibold">Disorder breakdown</p>
+                                {(data.disorders ?? []).map((d) => (
 
-
-                        <div className="space-y-3">
-                            <p className="text-sm font-semibold">Disorder breakdown</p>
-                            {(data.disorders ?? []).map((d) => (
-
-                                // left border indicator color
-                                <Card key={d.id} className="border-l-4" style={{
-                                    borderLeftColor: d.percentage >= 75 ? "#10b981"
-                                        : d.percentage >= 35 ? "#f59e0b"
-                                            : "#ef4444"
-                                }}>
-                                    <CardHeader className="pb-2 pt-3 px-4">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <CardTitle className="text-sm font-semibold">
-                                                    {d.disorder_name}
-                                                </CardTitle>
-                                                <CardDescription className="text-xs mt-0.5">
-                                                    DSM: {d.dsm_code}
-                                                </CardDescription>
-                                            </div>
-                                            {/* likelihood percentage badge */}
-                                            <Badge variant="outline" className="shrink-0 text-xs font-bold">
-                                                {d.percentage}%
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="px-4 pb-3 space-y-3">
-
-                                        {d.explenation && (
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                {d.explenation}
-                                            </p>
-                                        )}
-
-                                        {d.supporting_symptoms?.length > 0 && (
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-medium flex items-center gap-1 text-emerald-700">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                                    Supporting symptoms
-                                                </p>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {d.supporting_symptoms.map((s) => (
-                                                        <Badge
-                                                            key={s.symptom_id}
-                                                            variant="outline"
-                                                            className="text-xs bg-emerald-50 border-emerald-200 text-emerald-700"
-                                                        >
-                                                            {s.symptom_name}
-                                                        </Badge>
-                                                    ))}
+                                    // left border indicator color
+                                    <Card key={d.id} className="border-l-4" style={{
+                                        borderLeftColor: d.percentage >= 75 ? "#10b981"
+                                            : d.percentage >= 35 ? "#f59e0b"
+                                                : "#ef4444"
+                                    }}>
+                                        <CardHeader className="pb-2 pt-3 px-4">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <CardTitle className="text-sm font-semibold">
+                                                        {d.disorder_name}
+                                                    </CardTitle>
+                                                    <CardDescription className="text-xs mt-0.5">
+                                                        DSM: {d.dsm_code}
+                                                    </CardDescription>
                                                 </div>
+                                                {/* likelihood percentage badge */}
+                                                <Badge variant="outline" className="shrink-0 text-xs font-bold">
+                                                    {d.percentage}%
+                                                </Badge>
                                             </div>
-                                        )}
+                                        </CardHeader>
+                                        <CardContent className="px-4 pb-3 space-y-3">
 
-                                        {d.contradicting_symptoms?.length > 0 && (
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-medium flex items-center gap-1 text-red-600">
-                                                    <XCircle className="h-3.5 w-3.5" />
-                                                    Contradicting symptoms
+                                            {d.explenation && (
+                                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                                    {d.explenation}
                                                 </p>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {d.contradicting_symptoms.map((s) => (
-                                                        <Badge
-                                                            key={s.symptom_id}
-                                                            variant="outline"
-                                                            className="text-xs bg-red-50 border-red-200 text-red-600"
-                                                        >
-                                                            {s.symptom_name}
-                                                        </Badge>
-                                                    ))}
+                                            )}
+
+                                            {d.supporting_symptoms?.length > 0 && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium flex items-center gap-1 text-emerald-700">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                                        Supporting symptoms
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {d.supporting_symptoms.map((s) => (
+                                                            <Badge
+                                                                key={s.symptom_id}
+                                                                variant="outline"
+                                                                className="text-xs bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                            >
+                                                                {s.symptom_name}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                            )}
+
+                                            {d.contradicting_symptoms?.length > 0 && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium flex items-center gap-1 text-red-600">
+                                                        <XCircle className="h-3.5 w-3.5" />
+                                                        Contradicting symptoms
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {d.contradicting_symptoms.map((s) => (
+                                                            <Badge
+                                                                key={s.symptom_id}
+                                                                variant="outline"
+                                                                className="text-xs bg-red-50 border-red-200 text-red-600"
+                                                            >
+                                                                {s.symptom_name}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </DialogContent>
         </Dialog>
     );
