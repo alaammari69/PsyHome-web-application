@@ -4,6 +4,10 @@ The web dashboard for **PsyHome**, an AI-assisted psychiatric diagnostic platfor
 
 > **Status:** advanced prototype, not a shipped/production product. Built as part of a final-year engineering capstone (PFE), graded *Excellent*.
 
+## Demo
+
+[![PsyHome Demo](https://img.youtube.com/vi/HtEUl5g3oxw/0.jpg)](https://youtu.be/HtEUl5g3oxw)
+
 ## Part of the PsyHome Platform
 
 This repo is the web frontend. The full system also includes:
